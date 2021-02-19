@@ -81,4 +81,33 @@ public class ConnectToDb{
         return 0;
     }
 
+    public int testIdUnique(String p_id){
+        try {
+            Class.forName("org.sqlite.JDBC");
+            String dbURL = "jdbc:sqlite:ServeurChat.db";
+            try{
+                Connection conn = DriverManager.getConnection(dbURL);
+                System.out.println ( "Ouvert base de données avec succès");
+                String sql="Select identifiant,mdp from user where identifiant=?;";
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);
+                preparedStatement.setString(1,p_id);
+                try {
+                    ResultSet resSql=preparedStatement.executeQuery();
+                    String value = resSql.getString(1);
+                    System.out.println(value);
+                    return 1;
+                }catch(SQLException ex){
+                    ex.printStackTrace();
+                    return 0;
+                }
+            }catch(SQLException ex){
+                ex.printStackTrace();
+            }
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+            return 0;
+        }
+        return 0;
+    }
+
 }

@@ -11,6 +11,7 @@ public class Server {
     private final File m_file;
     private final List<ServiceThread> mesThreads = new ArrayList();
     private final List<String> identifiants = new ArrayList();
+    private boolean isAvailable=false;
     public Server()
     {
         this.conDb=new ConnectToDb();
@@ -33,10 +34,12 @@ public class Server {
         System.out.println(identifiants);
     }
 
-    public void notifyAllMyClient(String pMsg,ServiceThread pEnvoyeur)
+
+
+    public void notifyAllMyClient(String pMsg, ServiceThread pEnvoyeur)
     {
         for (ServiceThread mtThread: mesThreads) {
-            if(mtThread != pEnvoyeur)
+            if(mtThread != pEnvoyeur && mtThread.isAvailable())
                 mtThread.notify(pMsg);
         }
     }
@@ -55,6 +58,10 @@ public class Server {
             this.socketOfServer = socketOfServer;
             // Log
             log("New connection with client : " + this.clientNumber + " socket : " + socketOfServer);
+        }
+
+        public boolean isAvailable() {
+            return isAvailable;
         }
 
         public void notify(String pMsg)
@@ -90,7 +97,7 @@ public class Server {
                         //os.flush();
                         notify("<< Création de compte ->1");
                         try {
-                            sleep(3);
+                            sleep(5);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -101,8 +108,11 @@ public class Server {
                             String identifiant=is.readLine();
                             notify("<< Veuillez saisir un mot de passe pour votre compte");
                             String mdp=is.readLine();
-                            if(conDb.ajoutUtilisateur(identifiant,mdp)==1){
+                            if(conDb.testIdUnique(identifiant)==1)
+                                notify("identifiant déjà pris");
+                            else if(conDb.ajoutUtilisateur(identifiant,mdp)==1){
                                 firstConnection=false;
+                                isAvailable=true;
                                 notify("10");
 
                             }else{
@@ -126,6 +136,7 @@ public class Server {
                             System.out.println(mdp);
                             if(conDb.connexion(identifiant,mdp)==1){
                                 firstConnection=false;
+                                isAvailable=true;
                                 notify("10");
                             }else{
                                 notify("Mauvais identifiant ou mot de passe");
@@ -136,16 +147,21 @@ public class Server {
                         //choix du salon
                     }else
                     {
+                        try {
+                            sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         //lecture msg client
                         line = is.readLine();
                         //log de tous les messages
                         log("client n : "+this.clientNumber+" ip "+ socketOfServer +" msg : "+line);
-                    }
 
-                    switch(line){
+
+                    switch(line) {
                         case "quit":
                             System.out.println("Saisie quit");
-                        break;
+                            break;
 
                         case "!meteo":
                             System.out.println("meteo");
@@ -157,18 +173,35 @@ public class Server {
                             }
                             notify(meteo.printTemp());
                             notify(meteo.printWind());
-                        break;
+                            break;
 
                         case "!help":
                             System.out.println("Commande dispo");
                             notify("Oui salut");
-                        break;
+                            break;
 
                         case "!connexion":
 
-                        break;
-
+                            break;
                     }
+
+                        if (line.equals("quit") || line.equals("QUIT")) {
+                            os.write("GoodBye My Lover !");
+                            os.newLine();
+                            os.flush();
+                            //on quitte le chat
+                            System.out.println(is.readLine());
+                            leaveChat(this);
+                            break;
+                        }
+                        // Write to sockets
+
+                        if(!line.equals(""))
+                        {
+                            line = this.ID+ " : " +line;
+                            notifyAllMyClient(line,this);
+                        }
+                }
 
 
 
@@ -177,22 +210,7 @@ public class Server {
                     //log de tous les messages
                     //log("client n : "+this.clientNumber+" ip "+ socketOfServer +" msg : "+line);
                     // Si QUIT on kill le thread
-                    if (line.equals("quit") || line.equals("QUIT")) {
-                        os.write("GoodBye My Lover !");
-                        os.newLine();
-                        os.flush();
-                        //on quitte le chat
-                        System.out.println(is.readLine());
-                        leaveChat(this);
-                        break;
-                    }
-                    // Write to sockets
 
-                    if(!line.equals(""))
-                    {
-                        line = this.ID+ " : " +line;
-                        notifyAllMyClient(line,this);
-                    }
                     // (Send to client)
                     //os.write(">> " + line);
                     // End of line.

@@ -111,10 +111,12 @@ public class ThreadClient {
     private class listeningThread extends Thread {
         boolean connection =true;
         String isConnected="d";
+        String response="d";
         @Override
         public void run() {
             while(true)
             {
+                System.out.println("debut");
                 if(connection) {
                     System.out.println(lireReseau());
                     System.out.println(lireReseau());
@@ -127,7 +129,7 @@ public class ThreadClient {
                     System.out.println(lireReseau());
                     isConnected=lireReseau();
                     try {
-                        sleep(3);
+                        sleep(6);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -136,10 +138,17 @@ public class ThreadClient {
                         connection=false;
                         menu();
                     } else {
-                        System.out.println(isConnected);
+                       System.out.println(isConnected);
                     }
                 }else {
-                    String response = lireReseau();
+                    System.out.println("Wait message");
+                    try {
+                        sleep(6);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    response = lireReseau();
+
                     switch(response){
                         case ">> !menu":
 
@@ -155,13 +164,16 @@ public class ThreadClient {
                         break;
 
                         default:
-                            System.out.println("ici"+response);
-                        break;
+                            System.out.println(response);
+
                     }
-                    if(response.equals("GoodBye My Lover !"));
-                        break;
+
+                    if(response.equals("GoodBye My Lover !")){
+                        break;}
+                    }
                 }
             }
+
         }
     }
-}
+
